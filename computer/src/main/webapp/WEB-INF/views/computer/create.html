@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1>create Cus</h1>
+<form th:action="@{/computers/create}"  th:method="post" th:object="${computers}">
+
+    <input type="text" th:field="*{code}" placeholder="code">code
+    <input type="text" th:field="*{name}" placeholder="name">name
+    <input type="text" th:field="*{producer}" placeholder="producer">producer
+
+    <div>
+        <label for="type">type</label>
+        <select id="type" th:field="*{type}">
+            <option th:each="p : ${types}" th:value="${p.id}" th:text="${p.name}"></option>
+        </select>
+    </div>
+
+    <input type="submit" value="Save"/>
+
+</form>
+
+
+
+
+</body>
+</html>
