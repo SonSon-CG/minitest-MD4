@@ -4,66 +4,100 @@ package com.example.com_sboot.controller;
 
 
 import com.example.com_sboot.DTO.ITypeDTO;
+import com.example.com_sboot.model.Computer;
 import com.example.com_sboot.model.Type;
 import com.example.com_sboot.service.IComputerService;
 import com.example.com_sboot.service.ITypeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
 import java.util.Optional;
 
-@Controller
+@RestController
 @RequestMapping("/types")
+@CrossOrigin("*")
 public class TypeController {
     @Autowired
     private ITypeService typeService;
     @Autowired
     private IComputerService computerService;
 
+
     @GetMapping
-    public ModelAndView listType() {
-        ModelAndView mv = new ModelAndView("/type/list");
-        Iterable<Type> types = typeService.findAll();
-        mv.addObject("types", types);
-        return mv;
-    }
-
-@GetMapping("/dto")
-    public String dto(Model model) {
-Iterable<ITypeDTO> types = typeService.getAllTypes();
-model.addAttribute("types", types);
-return "/type/dto";
-    }
-
-
-    @GetMapping("/create")
-    public ModelAndView createForm() {
-        ModelAndView modelAndView = new ModelAndView("/type/create");
-        modelAndView.addObject("type", new Type());
-        return modelAndView;
-    }
-
-
-    @PostMapping("/create")
-    public String create(@ModelAttribute("type") Type type,
-                         RedirectAttributes redirectAttributes) {
-        typeService.save(type);
-        redirectAttributes.addFlashAttribute("message", "Create new type successfully");
-        return "redirect:/types";
-    }
-
-    @GetMapping("/delete/{id}")
-    public String deleteForm(@PathVariable Long id) {
-        Optional<Type> type = typeService.findById(id);
-        if (type.isPresent()) {
-            typeService.remove(id);
-            return "redirect:/types";
+    public ResponseEntity<Iterable<Type>> findAllType() {
+        List<Type> types = (List<Type>) typeService.findAll();
+        if (types.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-        return "redirect:/error_404";
+        return new ResponseEntity<>(types, HttpStatus.OK);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Type> findTypeById(@PathVariable Long id) {
+        Optional<Type> typeOptional = typeService.findById(id);
+        if (!typeOptional.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(typeOptional.get(), HttpStatus.OK);
+    }
+
+    @PostMapping
+    public ResponseEntity<Type> saveType(@RequestBody Type type) {
+        Type type1 = typeService.save(type);
+        return type1 != null
+                ? ResponseEntity.status(HttpStatus.CREATED).body(type1)
+                : ResponseEntity.badRequest().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Type> updateType(@PathVariable Long id, @RequestBody Type type) {
+        Optional<Type> typeOptional = typeService.findById(id);
+        if (!typeOptional.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        type.setId(typeOptional.get().getId());
+        return new ResponseEntity<>(typeService.save(type), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Type> deleteType(@PathVariable Long id) {
+        Optional<Type> typeOptional = typeService.findById(id);
+        if (!typeOptional.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        typeService.remove(id);
+        return new ResponseEntity<>(typeOptional.get(), HttpStatus.OK);
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<Iterable<ITypeDTO>> countType() {
+        Iterable<ITypeDTO> typeDTOS = typeService.getAllTypes();
+        if (!typeDTOS.iterator().hasNext()) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(typeDTOS, HttpStatus.OK);
+    }
+
+
+//    @GetMapping("/view-type/{id}")
+//    public ResponseEntity<?> viewType(@PathVariable("id") Long id) {
+//        Optional<Type> typeOptional = typeService.findById(id);
+//
+//        if (!typeOptional.isPresent()) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body("Type with ID " + id + " not found");
+//        }
+//
+//        Iterable<Computer> computers = computerService.findAllByType(typeOptional.get());
+//
+//        return ResponseEntity.ok(computers);
+//    }
 
 }
